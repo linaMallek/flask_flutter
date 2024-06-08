@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLB File Upload Test</title>
+</head>
+<body>
+    <h2>Upload a GLB Model File</h2>
+    <form id="uploadForm" action="http://localhost:5000/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".glb">
+        <br><br>
+        <button type="submit">Upload File</button>
+    </form>
+
+    <h2>Uploaded GLB Models</h2>
+    <ul id="modelList"></ul>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+    <script>
+        const socket = io('ws://localhost:5000');
+
+        // Function to fetch and display models
+        async function fetchModels() {
+            try {
+                const response = await fetch('http://localhost:5000/models');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch models');
+                }
+                const models = await response.json();
+                const modelList = document.getElementById('modelList');
+                modelList.innerHTML = '';
+                models.forEach(model => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${model.name} - ${model.src}`;
+                    modelList.appendChild(listItem);
+                });
+            } catch (error) {
+                console.error('Error fetching models:', error);
+            }
+        }
+
+        // WebSocket event listener
+        socket.on('model_uploaded', function(model) {
+            const modelList = document.getElementById('modelList');
+            const listItem = document.createElement('li');
+            listItem.textContent = `${model.name} - ${model.src}`;
+            modelList.appendChild(listItem);
+        });
+
+        // Fetch models on page load
+        fetchModels();
+
+        // Form submission handler (optional)
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            fetch('http://localhost:5000/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Upload success:', data);
+                fetchModels();  // Refresh the model list after upload
+            })
+            .catch(error => console.error('Upload error:', error));
+        });
+    </script>
+</body>
+</html>
