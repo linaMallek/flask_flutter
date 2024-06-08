@@ -6,3 +6,4 @@ venv/
 
 # Ignore the lib folder
 lib/
+templates\
