@@ -15,6 +15,7 @@ def list_files():
 
 @app.route('/files/<filename>', methods=['GET'])
 def get_file(filename):
+    # envoyer a mobile app
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/upload', methods=['POST'])
@@ -28,9 +29,18 @@ def upload_file():
         return jsonify({"error": "No file selected for uploading"}), 400
     
     if file and file.filename.endswith('.glb'):
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+        # Count existing GLB files in the UPLOAD_FOLDER
+        existing_files = os.listdir(app.config['UPLOAD_FOLDER'])
+        num_existing_files = len([name for name in existing_files if name.endswith('.glb')])
+        
+        # Create new filename based on the count
+        new_filename = f"Patient{num_existing_files + 1}.glb"
+        
+        # Save the file to UPLOAD_FOLDER with the new filename
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
         file.save(file_path)
-        return jsonify({"message": f"File {file.filename} successfully uploaded"}), 201
+        
+        return jsonify({"message": f"File {file.filename} successfully uploaded as {new_filename}"}), 201
     else:
         return jsonify({"error": "Invalid file format. Only .glb files are allowed."}), 400
 
